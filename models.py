@@ -55,13 +55,58 @@ class Encoder(nn.Module):
         z = z.view(-1, 16, self.T // 8, self.H // 8, self.W // 8)
         return z_mean, z_log_var, z
 
-# Example Usage
-C, T, H, W = 3, 5*16, 64, 64  # Channels, Height, Width, Temporal Length
-input_tensor = torch.randn(1, C, T, H, W)  # 3D input (Batch, Channels, Temporal, Height, Width)
+class Decoder(nn.Module):
+    def __init__(self, C, T, H, W):
+        super(Decoder, self).__init__()
+        self.H, self.W, self.T = H, W, T
 
-encoder = Encoder(C, T, H, W)
-z_mean, z_log_var, z = encoder(input_tensor)
+        # Fully connected layer to reshape z back into 3D
+        self.fc = nn.Linear(16 * (T // 8) * (H // 8) * (W // 8), 16 * (T // 8) * (H // 8) * (W // 8))
 
-print(f"Shape of z_mean: {z_mean.shape}")
-print(f"Shape of z_log_var: {z_log_var.shape}")
-print(f"Shape of z: {z.shape}")
+        # Temporal and spatial transpose convolutions
+        self.temp_deconv3 = nn.ConvTranspose3d(16, 16, (3, 1, 1), stride=(2, 1, 1), padding=(1, 0, 0), output_padding=(1, 0, 0))
+        self.deconv3 = nn.ConvTranspose3d(16, 8, (1, 3, 3), stride=(1, 2, 2), padding=(0, 1, 1), output_padding=(0, 1, 1))
+
+        self.temp_deconv2 = nn.ConvTranspose3d(8, 8, (3, 1, 1), stride=(2, 1, 1), padding=(1, 0, 0), output_padding=(1, 0, 0))
+        self.deconv2 = nn.ConvTranspose3d(8, 4, (1, 3, 3), stride=(1, 2, 2), padding=(0, 1, 1), output_padding=(0, 1, 1))
+
+        self.temp_deconv1 = nn.ConvTranspose3d(4, 4, (3, 1, 1), stride=(2, 1, 1), padding=(1, 0, 0), output_padding=(1, 0, 0))
+        self.deconv1 = nn.ConvTranspose3d(4, C, (1, 3, 3), stride=(1, 2, 2), padding=(0, 1, 1), output_padding=(0, 1, 1))
+
+    def forward(self, z):
+        batch_size = z.shape[0]
+
+        # Flatten and upsample
+        z = z.view(batch_size, -1)
+        z = F.relu(self.fc(z))
+        z = z.view(batch_size, 16, self.T // 8, self.H // 8, self.W // 8)
+
+        # Perform reverse convolution operations
+        z = F.relu(self.temp_deconv3(z))
+        z = F.relu(self.deconv3(z))
+
+        z = F.relu(self.temp_deconv2(z))
+        z = F.relu(self.deconv2(z))
+
+        z = F.relu(self.temp_deconv1(z))
+        z = self.deconv1(z)  # Last layer without activation for reconstruction
+
+        return z
+
+
+class SpatioTemporalAE(nn.Module):
+    def __init__(self, C, T, H, W):
+        super(SpatioTemporalAE, self).__init__()
+        self.encoder = Encoder(C, T, H, W)
+        self.decoder = Decoder(C, T, H, W)
+
+    def forward(self, x):
+        _, _, z = self.encoder(x)
+        reconstructed_x = self.decoder(z)
+        return reconstructed_x
+
+# Input dimensions
+C, T, H, W = 3, 5*16, 64, 64  # Channels, Temporal length, Height, Width
+input_tensor = torch.randn(1, C, T, H, W)  # Example input tensor
+autoencoder = SpatioTemporalAE(C, T, H, W)
+reconstructed_x = autoencoder(input_tensor)
