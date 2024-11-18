@@ -104,6 +104,42 @@ class SpatioTemporalAE(nn.Module):
         _, _, z = self.encoder(x)
         reconstructed_x = self.decoder(z)
         return reconstructed_x
+    
+class Patchify(nn.Module):
+    def __init__(self, input_dim, embed_dim, patch_size=(1, 2, 2)):
+        """
+        Patchify the latent video representation into tokens.
+        
+        Args:
+        - input_dim: Number of input channels.
+        - embed_dim: Dimension of the output embedding (projection dimension).
+        - patch_size: Tuple (k_t, k_h, k_w) for the patch size (kernel size).
+        """
+        super(Patchify, self).__init__()
+        self.patch_size = patch_size
+        self.projection = nn.Conv3d(
+            input_dim, 
+            embed_dim, 
+            kernel_size=patch_size, 
+            stride=patch_size
+        )
+
+    def forward(self, x):
+        """
+        Forward pass to convert the input tensor into patchified tokens.
+
+        Args:
+        - x: Input tensor of shape (batch_size, channels, T, H, W).
+
+        Returns:
+        - tokens: Flattened sequence of patches of shape (batch_size, num_tokens, embed_dim).
+        """
+        x = self.projection(x)  # Shape: (batch_size, embed_dim, T', H', W')
+        batch_size, embed_dim, t, h, w = x.shape
+        # Flatten spatial and temporal dimensions to create a sequence
+        tokens = x.view(batch_size, embed_dim, -1).permute(0, 2, 1)  # Shape: (batch_size, num_tokens, embed_dim)
+        return tokens
+
 
 # Input dimensions
 # C, T, H, W = 3, 5*16, 64, 64  # Channels, Temporal length, Height, Width
