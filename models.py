@@ -106,7 +106,9 @@ class SpatioTemporalAE(nn.Module):
         return reconstructed_x
 
 # Input dimensions
-C, T, H, W = 3, 5*16, 64, 64  # Channels, Temporal length, Height, Width
-input_tensor = torch.randn(1, C, T, H, W)  # Example input tensor
-autoencoder = SpatioTemporalAE(C, T, H, W)
-reconstructed_x = autoencoder(input_tensor)
+# C, T, H, W = 3, 5*16, 64, 64  # Channels, Temporal length, Height, Width
+# input_tensor = torch.randn(1, C, T, H, W)  # Example input tensor
+# autoencoder = SpatioTemporalAE(C, T, H, W)
+# reconstructed_x = autoencoder(input_tensor)
+
+# print(reconstructed_x.shape)  # Output shape: torch.Size([1, 3, 80, 64, 64])
