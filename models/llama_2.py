@@ -34,4 +34,27 @@ class Transformer(nn.Module):
 
         self.layers = nn.ModuleList()
         for _ in range(args.n_layers):
-            break
+            self.layers.append(EncoderBlock(args))
+
+        self.norm = RMSNorm(args.dim, eps=args.norm_eps)
+        self.output = nn.Linear(args.dim, self.vocab_size, bias=False)
+
+        self.freqs_complex = precompute_theta_pos_freq(self.args.dim // self.args.n_heads,
+                                                       self.args.max_seq_len * 2,
+                                                       device=self.args.device)
+        
+        def forward(self, tokens: torch.Tensor, start_pos: int):
+
+            batch_size, seq_len = tokens.shape
+            assert seq_len == 1, "Only one token at a time can be processed"
+
+            h = self.tok_embeddings(tokens)
+
+            freqs_complex = self.freqs_complex[start_pos: start_pos + seq_len]
+
+            for layer in self.layers:
+                h = layer(h, start_pos, freqs_complex)
+
+            h = self.norm(h)
+            output = self.output(h).float()
+            return output
