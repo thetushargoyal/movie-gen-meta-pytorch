@@ -58,3 +58,20 @@ class Transformer(nn.Module):
             h = self.norm(h)
             output = self.output(h).float()
             return output
+        
+def precompute_theta_pos_freq(head_dim: int, seq_len: int, device: str, theta: float = 10000.0):
+    assert head_dim % 2 != 0, "Head Dimension should be divisible by 2"
+    theta_numerator = torch.arange(0, head_dim, 2).float()
+    theta = 1.0 / (theta ** (theta_numerator /  head_dim)).to(device)
+    m = torch.arange(seq_len, device=device)
+    freqs = torch.outer(m, theta).float()
+    freq_complex = torch.polar(torch.ones_like(freqs), freqs)
+    return freq_complex
+
+def apply_rotary_embeddings(x: torch.Tensor, freqs_complex: torch.Tensor, device: str):
+    x_complex = torch.view_as_complex(x.float().reshape(*x.shapep[:-1], -1, 2))
+    freqs_complex = freqs_complex.unsqueeze(0).unsqueeze(2)
+    x_rotated = x_complex*freqs_complex
+    x_out = torch.view_as_real(x_rotated)
+    x_out = x_out.reshape(*x.shape)
+    return x_out.type_as(x).to(device)
