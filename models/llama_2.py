@@ -133,3 +133,68 @@ class SelfAttention(nn.Module):
     def forward(self, x: torch.Tensor, start_pos: int, freqs_complex: torch.Tensor):
         batch_size, seq_len, _ = x.shape
         
+        xq = self.wq(x) 
+        xk = self.wk(x)
+        xv = self.wv(x)
+
+        xq = xq.view(batch_size, seq_len, self.n_heads_q, self.head_dim)
+        xk = xk.view(batch_size, seq_len, self.n_kv_heads, self.head_dim)
+        xv = xv.view(batch_size, seq_len, self.n_kv_heads, self.head_dim)
+
+        xq = apply_rotary_embeddings(xq, freqs_complex, device=x.device)
+        xk = apply_rotary_embeddings(xk, freqs_complex, device=x.device)
+
+        self.cache_k[:batch_size, start_pos:start_pos+seq_len] = xk
+        self.cache_v[:batch_size, start_pos:start_pos+seq_len] = xv 
+
+        keys = self.cache_k[:batch_size, 0:start_pos+seq_len]
+        values = self.cache_v[:batch_size, 0:start_pos+seq_len]
+
+        keys = repeat_kv(keys, self.n_rep)
+        values = repeat_kv(values, self.n_reps)
+
+        xq = xq.transpose(1, 2)
+        keys = keys.transpose(1, 2)
+        values = keys.transpose(1, 2)
+
+        scores = torch.matmul(xq, keys.transpose(2, 3)) / math.sqrt(self.head_dim)
+        scores = F.softmax(scores.float(), dim=-1).type_as(xq)
+
+        output = torch.matmul(scores, values)
+
+        output = (output.transpose(1,2).contiguous().view(batch_size, seq_len, -1))
+        return self.wo(output)
+
+
+def repeat_kv(x: torch.Tensor, n_rep: int) -> torch.Tensor:
+    batch_size, seq_len, n_kv_heads, head_dim = x.shape
+    if n_rep == 1:
+        return x
+    else:
+        return (
+            x[:, :, :, None, :]
+            .expand(batch_size, seq_len, n_kv_heads, n_rep, head_dim)
+            .reshape(batch_size, seq_len, n_kv_heads*n_rep, head_dim)
+        )
+    
+class FeedForward(nn.Module):
+
+    def __init__(self, args: ModelArgs):
+        super().__init__()
+
+        hidden_dim = 4*args.dim
+        hidden_dim = int(2*hidden_dim/3)
+        if args.ffn_dim_multiplier is not None:
+            hidden_dim = int(args.ffn_dim_multiplier*hidden_dim)
+        hidden = args.multiple_of*((hidden + args.multiple_of - 1) // args.multiple_of)
+
+        self.w1 = nn.Linear(args.dim, hidden_dim, bias=False)
+        self.w2 = nn.Linear(hidden_dim, args.dim, bias=False)
+        self.w3 = nn.Linear(args.dim, hidden_dim, bias=False)
+
+    def forward(self, x: torch.Tensor):
+        swish = F.silu(self.w1(x))
+        x_V = self.w3(x)
+        x = swish * x_V
+        x = self.w2(x)
+        return x
