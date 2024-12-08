@@ -35,15 +35,15 @@ class Attention(nn.Module):
     self.cache_k = torch.zeros((args.max_batch_size, args.max_seq_len, self.n_kv_heads, self.head_dim), device=args.device)
     self.cache_v = torch.zeros((args.max_batch_size, args.max_seq_len, self.n_kv_heads, self.head_dim), device=args.device)
 
-  def forward(self, x: torch.Tensor, start_pos, inference):
+  def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, start_pos, inference):
     # Shape of the input embedding: [bsz,seq_len,dim]
-    bsz, seq_len, _ = x.shape
+    bsz, seq_len, _ = query.shape
     # Mask will be used during 'Training' and is not required for 'inference' due to the use of KV cache.
     mask = None
 
-    xq = self.wq(x)  #x[bsz,seq_len,dim]*wq[dim,n_heads * head_dim] -> q[bsz,seq_len,n_heads * head_dim]
-    xk = self.wk(x)  #x[bsz,seq_len,dim]*wq[dim,n_kv_heads * head_dim] -> k[bsz,seq_len,n_kv_heads * head_dim]
-    xv = self.wv(x)  #x[bsz,seq_len,dim]*wq[dim,n_kv_heads * head_dim] -> v[bsz,seq_len,n_kv_heads * head_dim]
+    xq = self.wq(query)  #x[bsz,seq_len,dim]*wq[dim,n_heads * head_dim] -> q[bsz,seq_len,n_heads * head_dim]
+    xk = self.wk(key)  #x[bsz,seq_len,dim]*wq[dim,n_kv_heads * head_dim] -> k[bsz,seq_len,n_kv_heads * head_dim]
+    xv = self.wv(value)  #x[bsz,seq_len,dim]*wq[dim,n_kv_heads * head_dim] -> v[bsz,seq_len,n_kv_heads * head_dim]
 
     # Reshaping Querys, Keys and Values by their number of heads. (Group Query Attention Implementation)
     xq = xq.view(bsz, seq_len, self.n_heads, self.head_dim)      #xq[bsz,seq_len,n_heads, head_dim]

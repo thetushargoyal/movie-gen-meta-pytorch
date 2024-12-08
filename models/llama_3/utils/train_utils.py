@@ -3,7 +3,7 @@ from .data_utils import get_dataset_batch
 from .evaluation import evaluate_loss
 import time
 import pandas as pd
-
+import torch
 # Define a training function to perform model training
 def train(model, optimizer, dataset, vocab, stoi, itos, args: ModelArgs):
     epochs = args.epochs
@@ -18,7 +18,10 @@ def train(model, optimizer, dataset, vocab, stoi, itos, args: ModelArgs):
         xs, ys = get_dataset_batch(dataset, 'train', vocab, stoi, itos, args)
         xs = xs.to(device)
         ys = ys.to(device)
-        logits, loss = model(x=xs, targets=ys)
+        prompt_embeddings = torch.rand([xs.shape[0], 256, args.dim]) # dummy prompt needs to be embedded later
+        logits, loss = model(x=xs, 
+                             prompt_embedding=prompt_embeddings, 
+                             targets=ys)
         loss.backward()
         optimizer.step()
 
