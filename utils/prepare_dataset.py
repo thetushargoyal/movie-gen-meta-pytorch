@@ -9,7 +9,7 @@ def preprocess_video(sample, target_height=64, target_width=64, max_frames=80):
     The preprocessing involves cropping the video to the target dimensions and reducing
     the frame count to a maximum of `max_frames`.
 
-    Args:
+    args:
         sample (dict): A dictionary containing video metadata with keys:
                        - 'contentUrl': URL of the video.
         target_height (int): The target height for cropping the video.

@@ -3,7 +3,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from typing import Optional
-from utils.Args import ModelArgs
+from utils.args import ModelArgs
 
 class FeedForward(nn.Module):
   def __init__(self, args: ModelArgs, dim:int, hidden_dim:int, multiple_of:int, ffn_dim_multiplier: Optional[float]):

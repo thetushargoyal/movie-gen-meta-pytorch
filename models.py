@@ -110,7 +110,7 @@ class Patchify(nn.Module):
         """
         Patchify the latent video representation into tokens.
         
-        Args:
+        args:
         - input_dim: Number of input channels.
         - embed_dim: Dimension of the output embedding (projection dimension).
         - patch_size: Tuple (k_t, k_h, k_w) for the patch size (kernel size).
@@ -128,7 +128,7 @@ class Patchify(nn.Module):
         """
         Forward pass to convert the input tensor into patchified tokens.
 
-        Args:
+        args:
         - x: Input tensor of shape (batch_size, channels, T, H, W).
 
         Returns:

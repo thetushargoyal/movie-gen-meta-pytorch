@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Tuple
 import torch
-from utils.Args import ModelArgs
+from utils.args import ModelArgs
 
 ## Step2b: The RoPE
 def precompute_freqs_cis(dim:int, seq_len: int, theta: float=10000.0):

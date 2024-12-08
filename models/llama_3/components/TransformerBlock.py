@@ -1,5 +1,5 @@
 from torch import nn
-from utils.Args import ModelArgs
+from utils.args import ModelArgs
 from .RMS_Norm import RMSNorm
 from .MultiHeadAttention import Attention
 from .FeedForward import FeedForward

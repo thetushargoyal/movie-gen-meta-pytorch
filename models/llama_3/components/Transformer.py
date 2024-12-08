@@ -1,6 +1,6 @@
 from torch import nn
 from torch.nn import functional as F
-from utils.Args import ModelArgs
+from utils.args import ModelArgs
 from .TransformerBlock import TransformerBlock
 from .RMS_Norm import RMSNorm
 

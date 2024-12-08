@@ -1,4 +1,4 @@
-from utils.Args import ModelArgs
+from utils.args import ModelArgs
 from utils.train_utils import train
 from utils.data_utils import load_dataset
 from components.Transformer import Transformer

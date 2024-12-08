@@ -1,5 +1,5 @@
 import torch
-from .Args import ModelArgs
+from .args import ModelArgs
 import numpy as np
 
 # Tokenizers encode function: take a string, output a list of integers

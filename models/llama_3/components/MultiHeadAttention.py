@@ -2,7 +2,7 @@ import math
 import torch
 from torch import nn
 from torch.nn import functional as F
-from utils.Args import ModelArgs
+from utils.args import ModelArgs
 from .RoPE import precompute_freqs_cis, apply_rotary_emb
 
 ## The Attention Block [Step2c: The KV Cache; Step2d: Group Query Attention]

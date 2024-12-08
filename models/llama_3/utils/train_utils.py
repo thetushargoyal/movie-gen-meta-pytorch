@@ -1,4 +1,4 @@
-from .Args import ModelArgs
+from .args import ModelArgs
 from .data_utils import get_dataset_batch
 from .evaluation import evaluate_loss
 import time
