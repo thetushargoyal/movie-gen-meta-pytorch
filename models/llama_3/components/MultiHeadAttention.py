@@ -23,6 +23,8 @@ class Attention(nn.Module):
     # Number of repetition in order to make time Key, Value heads to match Query heads number
     self.n_rep = args.n_heads // args.n_kv_heads
 
+    self.enable_casual_attention = args.enable_casual_attention
+
     # Weight initialize for Keys, Querys, Values and Oupt. Notice that the out_feature value of weight for q and kv are based on it's heads
     self.wq = nn.Linear(self.dim, self.n_heads * self.head_dim, bias=False, device=args.device)
     self.wk = nn.Linear(self.dim, self.n_kv_heads * self.head_dim, bias=False, device=args.device)
@@ -86,8 +88,9 @@ class Attention(nn.Module):
       values = repeat_kv(xv, self.n_rep)
 
       # For training mode, we'll compute mask and apply to the attention score later
-      mask = torch.full((seq_len, seq_len),float("-inf"),device=self.args.device)
-      mask = torch.triu(mask, diagonal=1).to(self.args.device)
+      if self.enable_casual_attention:
+        mask = torch.full((seq_len, seq_len),float("-inf"),device=self.args.device)
+        mask = torch.triu(mask, diagonal=1).to(self.args.device)
 
     # To compute attention, we'll need to perform a transpose operation to reshape all queries, keys and values bring heads at dim 1 and seq at dim 2
     xq = xq.transpose(1,2)                  #xq[bsz,n_heads,seq_len,head_dim]

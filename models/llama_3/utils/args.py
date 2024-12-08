@@ -20,7 +20,7 @@ class ModelArgs:
     ffn_dim_multiplier: Optional[float] = None  # Require to calculate dim of feedfoward network
     norm_eps: float = 1e-5                       # Default Epsilon value set for the RMSNorm calculation
     rope_theta: float = 10000.0   # Default theta value for the RePE calculation
-
+    enable_casual_attention: bool = True
     max_batch_size: int = 10      # Max batch size
     max_seq_len: int = 256         # Max sequence length
 

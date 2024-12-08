@@ -1,6 +1,6 @@
 # Llama Transformer
 
-Movie Gen Paper describes that they use Llama's as a backbone for their transformer architecture with some key changes. 
+[Movie Gen Paper](https://arxiv.org/abs/2410.13720) describes that they use Llama's as a backbone for their transformer architecture with some key changes. 
 
 # Implementing Llama from Scratch using PyTorch
 
